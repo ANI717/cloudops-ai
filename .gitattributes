@@ -1,0 +1,8 @@
+# Normalize line endings: store LF in the repo and check out LF by default.
+# Prevents CRLF breaking shell scripts and Dockerfiles in Linux containers/CI.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
