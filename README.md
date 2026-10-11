@@ -37,7 +37,8 @@ Technologies are introduced incrementally, only when they are needed.
 ```text
 cloudops-ai/
 ├── CLAUDE.md        # Instructions for AI-assisted development
-├── LICENSE
+├── LICENSE          # Apache License 2.0
+├── NOTICE           # Copyright notice
 └── README.md
 ```
 
@@ -64,4 +65,7 @@ Setup and run instructions will be added as components are implemented.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+Copyright 2026 Animesh Bala Ani
+
+Licensed under the [Apache License, Version 2.0](LICENSE). See [NOTICE](NOTICE)
+for attribution details.
