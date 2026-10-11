@@ -1,0 +1,18 @@
+[project]
+name = "cloudops-backend"
+version = "0.1.0"
+description = "CloudOps AI backend API service"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]>=0.143.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.13.1",
+    "pytest>=9.1.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

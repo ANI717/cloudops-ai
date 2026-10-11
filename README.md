@@ -36,13 +36,14 @@ Technologies are introduced incrementally, only when they are needed.
 
 ```text
 cloudops-ai/
+├── backend/         # Python backend service (managed with uv)
 ├── CLAUDE.md        # Instructions for AI-assisted development
 ├── LICENSE          # Apache License 2.0
 ├── NOTICE           # Copyright notice
 └── README.md
 ```
 
-`backend/` and `frontend/` directories will be added as development progresses.
+A `frontend/` directory will be added as development progresses.
 
 ## Prerequisites
 
@@ -61,7 +62,31 @@ git clone https://github.com/ANI717/cloudops-ai.git
 cd cloudops-ai
 ```
 
-Setup and run instructions will be added as components are implemented.
+### Backend
+
+uv installs the pinned Python version (if needed), creates a virtual environment
+in `backend/.venv`, and installs the exact dependencies from `uv.lock`:
+
+```bash
+cd backend
+uv sync
+uv run python --version   # Python 3.14.x
+```
+
+Run the development server (auto-reloads on code changes):
+
+```bash
+uv run fastapi dev app/main.py
+```
+
+- Health check: <http://127.0.0.1:8000/health>
+- Interactive API docs: <http://127.0.0.1:8000/docs>
+
+Run the tests:
+
+```bash
+uv run pytest
+```
 
 ## License
 
