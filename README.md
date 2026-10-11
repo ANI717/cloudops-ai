@@ -38,6 +38,7 @@ Technologies are introduced incrementally, only when they are needed.
 cloudops-ai/
 ├── backend/         # Python backend service (managed with uv)
 ├── CLAUDE.md        # Instructions for AI-assisted development
+├── DEVLOG.md        # Running log of changes, one entry per task
 ├── LICENSE          # Apache License 2.0
 ├── NOTICE           # Copyright notice
 └── README.md

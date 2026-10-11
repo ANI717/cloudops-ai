@@ -48,6 +48,7 @@ Act as both a senior software engineer and an engineering mentor.
 8. Never hardcode credentials or secrets.
 9. Do not claim code works without verifying it.
 10. After each task, summarize what changed, why, and how to test it.
+11. After each task, append an entry to `DEVLOG.md` (never rewrite past entries), following the entry format at the top of that file. Include the DEVLOG update in the task's commit.
 
 ## Engineering Standards
 
@@ -78,6 +79,9 @@ Do not overwhelm me with long explanations or multiple future steps.
 
 The project is in its initial setup phase.
 
-No application code has been implemented yet.
+Implemented so far:
 
-Current objective: Establish the project structure and development environment.
+- Repository foundation: README, Apache 2.0 license, `.gitignore`, `.gitattributes`, `DEVLOG.md`.
+- `backend/`: uv project (Python 3.14) with a FastAPI app (`create_app()` factory) and a `GET /health` endpoint, tested with pytest.
+
+Current objective: Establish the development environment. Next proposed step: add ruff (lint/format) and mypy (strict type checking) to the backend.
