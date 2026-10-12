@@ -262,3 +262,28 @@ links entries to commits. Entries written before this log existed list their com
 - Negative tests in a scratch folder: a fake GitHub token makes Gitleaks exit 1 ("leaks found: 1"), and `requirements.txt` pinning `jinja2==2.10` / `requests==2.19.0` makes Trivy exit 1 (2 HIGH).
 - Simulated the CI install steps: both Linux tarballs pass `sha256sum --check`, contain the expected binary, and a wrong checksum is rejected.
 - After pushing, the CI run shows both "Backend checks" and "Security scans" jobs passing.
+
+## 2026-10-12 — Environment-based settings
+
+**What changed:**
+- Declared `pydantic-settings` as a direct backend dependency. It was already installed via `fastapi[standard]`, so nothing new was downloaded.
+- `app/core/config.py`: replaced the constants with a `Settings` class (`app_name`, `environment`) that reads `CLOUDOPS_*` environment variables, then `backend/.env`, then the defaults. Added `get_settings()`, cached with `lru_cache`. `APP_VERSION` stays a constant.
+- `app/main.py`: `create_app(settings: Settings | None = None)` falls back to `get_settings()`. In `production`, `/docs`, `/redoc`, and `/openapi.json` are disabled.
+- Added `backend/.env.example` (committed template; `.env` stays gitignored).
+- Added `tests/test_config.py`: defaults, environment override, invalid value rejected, docs on in development and off in production.
+- README "Configuration" notes; `CLAUDE.md` status and roadmap.
+
+**Why:**
+- The upcoming database URL and credentials must come from the environment, never from code. This sets up the mechanism first.
+- Follows the FastAPI docs settings pattern (a `BaseSettings` class plus a cached getter).
+- The `CLOUDOPS_` prefix avoids clashes with other tools' variables. A `Literal` type means a typo like `prodution` fails at startup instead of silently running with the wrong behaviour.
+- Passing settings into `create_app()` lets tests use exact settings without touching the real environment. Tests use `_env_file=None` so a developer's `.env` can't change results.
+- Disabling the interactive docs in production reduces the public attack surface.
+- Agreed infrastructure direction for the next step: self-contained `infra/<service>/` folders, each with its own `compose.yaml` and README, pulled together by a root `compose.yaml` using `include`.
+
+**How to verify:**
+- `cd backend && uv run pytest --cov`: 6 passed, 100% coverage.
+- `uv run fastapi dev app/main.py`: `/docs` returns 200.
+- `CLOUDOPS_ENVIRONMENT=production uv run fastapi dev app/main.py`: `/docs` returns 404 and `/health` returns ok.
+- `CLOUDOPS_APP_NAME` set in `backend/.env` changes the title in `/openapi.json`.
+- `CLOUDOPS_ENVIRONMENT=bogus` fails at startup: "Input should be 'development', 'test' or 'production'".

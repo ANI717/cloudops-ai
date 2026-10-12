@@ -83,11 +83,11 @@ Implemented so far:
 
 - Repository foundation: README, Apache 2.0 license, `.gitignore`, `.gitattributes`, `DEVLOG.md`.
 - `backend/`: uv project (Python 3.14) with a FastAPI app (`create_app()` factory) and a `GET /health` endpoint, tested with pytest.
-- Backend layout (`backend/app/`): `api/routes/` for HTTP routers only (one module per resource, registered in `api/main.py`), `schemas/` for Pydantic models, `services/` for business logic, `core/config.py` for app-wide settings, `utils/` for small shared helpers. One module per resource with matching names.
+- Backend layout (`backend/app/`): `api/routes/` for HTTP routers only (one module per resource, registered in `api/main.py`), `schemas/` for Pydantic models, `services/` for business logic, `core/config.py` for app-wide settings (pydantic-settings `Settings` read from `CLOUDOPS_*` env vars / `backend/.env`; template in `backend/.env.example`; inject into `create_app(settings)` in tests), `utils/` for small shared helpers. One module per resource with matching names.
 - Backend code quality: ruff (lint + format) and mypy (strict, with the pydantic plugin), configured in `backend/pyproject.toml`.
 - CI: GitHub Actions workflow (`.github/workflows/ci.yml`) runs ruff, mypy, and pytest with coverage on pushes to `main` and on pull requests. Actions are pinned to commit SHAs.
 - Security scanning: a separate `security` CI job runs Gitleaks (secrets, full git history) and Trivy (HIGH/CRITICAL fixable vulns in `uv.lock` incl. dev deps, plus IaC misconfigs; config in `trivy.yaml`). Both are official release binaries verified by pinned SHA-256 checksums. No third-party actions.
 - Pre-commit hooks (`.pre-commit-config.yaml`): file hygiene checks, ruff check/format, `uv lock --check`, and mypy on every commit. Tests run in CI only. Install once per clone with `uv run pre-commit install` from `backend/`.
 - Test coverage: pytest-cov, configured in `backend/pyproject.toml`. Measures `app/` with branch coverage, minimum 80%. Opt-in locally with `uv run pytest --cov`. CI publishes the report to the run summary and a `coverage-xml` artifact (no external coverage services).
 
-Current objective: Establish the development environment. Next proposed step: a branch + PR workflow.
+Current objective: Build the foundations for the first feature. Done: environment-based settings. Next: local PostgreSQL in `infra/postgres/` (Docker Compose; root `compose.yaml` includes each `infra/<service>/compose.yaml`), then SQLAlchemy + Alembic in `backend/`. Deferred: branch + PR workflow.

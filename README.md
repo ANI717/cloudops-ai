@@ -121,6 +121,21 @@ a `uv.lock` consistency check, and mypy on the staged files (configured in
 file, the commit is stopped: review the changes, `git add` them, and commit again.
 Run all hooks on every file with `uv run pre-commit run --all-files`.
 
+Optionally, create a local config file (gitignored) from the template:
+
+```bash
+cp .env.example .env
+```
+
+Settings are read from environment variables prefixed with `CLOUDOPS_`, then from
+`backend/.env`, then from defaults in `app/core/config.py`. Invalid values stop
+the app at startup with a clear error.
+
+| Variable               | Default       | Description                                                       |
+| ---------------------- | ------------- | ----------------------------------------------------------------- |
+| `CLOUDOPS_ENVIRONMENT` | `development` | `development`, `test`, or `production` (production disables `/docs`) |
+| `CLOUDOPS_APP_NAME`    | `CloudOps AI` | Display name in the API docs                                      |
+
 **2. Run the development server**
 
 ```bash

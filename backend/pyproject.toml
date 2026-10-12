@@ -5,6 +5,7 @@ description = "CloudOps AI backend API service"
 requires-python = ">=3.14"
 dependencies = [
     "fastapi[standard]>=0.143.0",
+    "pydantic-settings>=2.15.0",
 ]
 
 [dependency-groups]
