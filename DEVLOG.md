@@ -165,3 +165,15 @@ links entries to commits. Entries written before this log existed list their com
 **How to verify:**
 - Locally, from `backend/`: `uv sync --locked`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy`, and `uv run pytest` all pass.
 - After pushing, the "CI" run shows green in the repository's Actions tab.
+
+## 2026-10-11 — Refresh README setup and run instructions
+
+**What changed:**
+- `README.md`: updated Project Status, added the `.github/` and `backend/app/` layout to Repository Structure, added uv install commands, and reorganized the Backend section into numbered steps (set up, run server, run tests, code quality, run all CI checks locally).
+
+**Why:**
+- The README still said no code existed and didn't show the backend layout.
+- A new contributor (or future me) can go from clone to running server and passing checks by following one section.
+
+**How to verify:**
+- From `backend/`, run each README command as written: `uv sync`, `uv run fastapi dev app/main.py` plus `curl http://127.0.0.1:8000/health`, `uv run pytest`, and the CI-checks one-liner. All succeed.
