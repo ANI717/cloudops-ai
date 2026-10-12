@@ -1,0 +1,27 @@
+# Trivy configuration, shared by CI and local runs (`trivy fs .` picks it up).
+# Docs: https://trivy.dev/latest/docs/references/configuration/config-file/
+
+scan:
+  # vuln: known CVEs in dependencies (reads backend/uv.lock).
+  # misconfig: insecure settings in IaC files (Dockerfiles, Kubernetes, etc.).
+  # Secret scanning is left to Gitleaks.
+  scanners:
+    - vuln
+    - misconfig
+  skip-dirs:
+    - backend/.venv
+
+severity:
+  - HIGH
+  - CRITICAL
+
+pkg:
+  # Dev tools (pytest, ruff, pre-commit, ...) run on dev machines and in CI,
+  # so their vulnerabilities matter too.
+  include-dev-deps: true
+
+vulnerability:
+  # Only fail on vulnerabilities that have a fixed version to upgrade to.
+  ignore-unfixed: true
+
+exit-code: 1

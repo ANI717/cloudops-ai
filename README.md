@@ -41,6 +41,8 @@ cloudops-ai/
 │   └── workflows/
 │       └── ci.yml   # CI: lint, format check, type check, tests
 ├── .pre-commit-config.yaml  # Git hooks run on every commit
+├── .gitleaks.toml   # Gitleaks secret scan settings
+├── trivy.yaml       # Trivy security scan settings
 ├── backend/         # Python backend service (managed with uv)
 │   ├── app/
 │   │   ├── main.py      # FastAPI app factory (create_app)
@@ -165,6 +167,37 @@ every pull request:
 ```bash
 uv sync --locked && uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest --cov
 ```
+
+### Security scanning
+
+CI runs two free, open-source scanners in a separate **Security scans** job:
+
+- [Gitleaks](https://github.com/gitleaks/gitleaks) checks the full git history for
+  accidentally committed secrets (API keys, tokens, passwords).
+- [Trivy](https://trivy.dev/) checks dependencies (`backend/uv.lock`, including dev
+  tools) for known HIGH/CRITICAL vulnerabilities that have a fix available, and
+  infrastructure files (Dockerfiles, Kubernetes manifests) for misconfigurations.
+  Settings live in [`trivy.yaml`](trivy.yaml).
+
+To run them locally, install the tools once:
+
+```bash
+# Windows
+winget install Gitleaks.Gitleaks AquaSecurity.Trivy
+# macOS
+brew install gitleaks trivy
+```
+
+Then, from the repository root:
+
+```bash
+gitleaks git . --redact     # scan all commits for secrets
+gitleaks dir . --redact     # also scan uncommitted files (skips .venv, see .gitleaks.toml)
+trivy fs .                  # scan dependencies and config files (reads trivy.yaml)
+```
+
+Each command exits non-zero if it finds a problem. The first Trivy run downloads
+its vulnerability database (about 1 minute).
 
 ## License
 

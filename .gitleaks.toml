@@ -1,0 +1,9 @@
+# Gitleaks configuration (picked up automatically from the repo root).
+# Docs: https://github.com/gitleaks/gitleaks#configuration
+
+[extend]
+useDefault = true # keep all built-in secret rules
+
+[[allowlists]]
+description = "Third-party packages in the local virtualenv (gitignored, never committed)"
+paths = ['''(^|[\\/])\.venv[\\/]''']

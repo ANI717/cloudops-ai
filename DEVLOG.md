@@ -236,3 +236,29 @@ links entries to commits. Entries written before this log existed list their com
 - `cd backend && uv sync && uv run pre-commit install`
 - `uv run pre-commit run --all-files`: all hooks pass.
 - Commit a file containing `import os` and a function returning the wrong type: the commit is blocked (ruff removes the unused import and fails; mypy reports the type error).
+
+## 2026-10-11 — Add security scanning (Gitleaks + Trivy)
+
+**What changed:**
+- `.github/workflows/ci.yml`: new `security` job ("Security scans"), separate from the backend checks:
+  - Checkout with full history (`fetch-depth: 0`) and `persist-credentials: false`.
+  - Downloads the official Gitleaks v8.30.1 and Trivy v0.74.0 Linux release binaries and verifies them against SHA-256 checksums pinned in the workflow.
+  - `gitleaks git . --redact`: scans every commit for secrets.
+  - `trivy fs .`: scans dependencies and config files. It runs even if Gitleaks fails, so both results are always reported.
+- New `trivy.yaml`: vuln + misconfig scanners (secrets are left to Gitleaks), HIGH/CRITICAL only, ignore unfixed, include dev dependencies, skip `backend/.venv`, exit code 1 on findings.
+- New `.gitleaks.toml`: keeps all default rules and allowlists only `.venv/`. Without it, `gitleaks dir .` reported 8 false positives (base64 test keys in third-party packages such as dnspython and protobuf).
+- README: "Security scanning" section with local install and run commands. `CLAUDE.md`: project status.
+
+**Why:**
+- Catches leaked credentials and known-vulnerable dependencies automatically, using free, open-source tools with no accounts or dashboards.
+- Binaries pinned by checksum instead of `gitleaks-action` / `trivy-action`: in March 2026, attackers force-pushed malicious code to most `trivy-action` tags (CVE-2026-33634). Checksum-verified official binaries mean no third-party action code runs, and a tampered download fails the job.
+- Trivy v0.74.0 rather than v0.75.0, because the newer release was only 10 days old. Both chosen versions are well after the compromised 0.69.4–0.69.6 releases.
+- Only fixable HIGH/CRITICAL findings fail the build, so CI fails only on issues you can act on by upgrading.
+- The workflow-level `permissions: contents: read` applies to the new job; nothing needs write access.
+
+**How to verify:**
+- Locally (checksum-verified Windows binaries of the same versions): `gitleaks git . --redact` reports "13 commits scanned, no leaks found"; `trivy fs .` loads `trivy.yaml` and reports 0 vulnerabilities in `backend/uv.lock`.
+- `gitleaks dir . --redact` reports no leaks with `.gitleaks.toml`, and still flags a fake token placed in `backend/app/`.
+- Negative tests in a scratch folder: a fake GitHub token makes Gitleaks exit 1 ("leaks found: 1"), and `requirements.txt` pinning `jinja2==2.10` / `requests==2.19.0` makes Trivy exit 1 (2 HIGH).
+- Simulated the CI install steps: both Linux tarballs pass `sha256sum --check`, contain the expected binary, and a wrong checksum is rejected.
+- After pushing, the CI run shows both "Backend checks" and "Security scans" jobs passing.
