@@ -43,7 +43,9 @@ cloudops-ai/
 ├── backend/         # Python backend service (managed with uv)
 │   ├── app/
 │   │   ├── main.py      # FastAPI app factory (create_app)
-│   │   ├── api/routes/  # HTTP routers only
+│   │   ├── api/
+│   │   │   ├── main.py  # Combines all routers into api_router
+│   │   │   └── routes/  # HTTP routers only
 │   │   ├── core/        # App-wide settings (config.py)
 │   │   ├── schemas/     # Pydantic request/response models
 │   │   ├── services/    # Business logic

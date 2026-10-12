@@ -177,3 +177,19 @@ links entries to commits. Entries written before this log existed list their com
 
 **How to verify:**
 - From `backend/`, run each README command as written: `uv sync`, `uv run fastapi dev app/main.py` plus `curl http://127.0.0.1:8000/health`, `uv run pytest`, and the CI-checks one-liner. All succeed.
+
+## 2026-10-11 — Add API router aggregator
+
+**What changed:**
+- Added `app/api/main.py`, which builds `api_router` and registers each router from `app/api/routes/`.
+- `app/main.py` now includes only `api_router`, not individual routers.
+- Updated the layout notes in `CLAUDE.md` and the README tree.
+
+**Why:**
+- Follows the `backend/app/api/` structure of FastAPI's official full-stack template (`api/main.py` + `api/routes/`; `api/deps.py` comes later with the database).
+- Adding an endpoint now only touches `app/api/`; the app factory stays unchanged.
+- No URL prefix (the template uses `/api/v1`) for now, so `/health` stays at the root where probes expect it.
+
+**How to verify:**
+- `cd backend && uv run pytest` shows 1 passed; `ruff check`, `ruff format --check`, and `mypy` pass.
+- `uv run fastapi dev app/main.py`, then `curl http://127.0.0.1:8000/health` returns `{"status":"ok"}`.
