@@ -1,0 +1,11 @@
+# Local infrastructure for CloudOps AI.
+# Each service lives in its own infra/<service>/ folder with a compose.yaml,
+# .env.example, and README. This file only pulls them together, so you can run:
+#   docker compose up -d postgres   # one service
+#   docker compose up -d            # everything
+#   docker compose ps               # status
+
+name: cloudops
+
+include:
+  - infra/postgres/compose.yaml

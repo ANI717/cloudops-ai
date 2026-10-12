@@ -43,6 +43,9 @@ cloudops-ai/
 ├── .pre-commit-config.yaml  # Git hooks run on every commit
 ├── .gitleaks.toml   # Gitleaks secret scan settings
 ├── trivy.yaml       # Trivy security scan settings
+├── compose.yaml     # Local infrastructure entry point (includes infra/*/compose.yaml)
+├── infra/
+│   └── postgres/    # PostgreSQL: compose.yaml, .env.example, README
 ├── backend/         # Python backend service (managed with uv)
 │   ├── app/
 │   │   ├── main.py      # FastAPI app factory (create_app)
@@ -69,6 +72,7 @@ A `frontend/` directory will be added as development progresses.
 
 - [Git](https://git-scm.com/)
 - [uv](https://docs.astral.sh/uv/getting-started/installation/): Python package and environment manager
+- [Docker](https://docs.docker.com/get-docker/) with Compose v2.20+ (Docker Desktop includes it) for local services such as PostgreSQL
 
 Install uv (you don't need to install Python separately; uv handles it):
 
@@ -85,7 +89,6 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 Needed later:
 
 - [Node.js](https://nodejs.org/) (LTS) for the frontend
-- [Docker](https://docs.docker.com/get-docker/) for local services
 
 ## Getting Started
 
@@ -93,6 +96,25 @@ Needed later:
 git clone https://github.com/ANI717/cloudops-ai.git
 cd cloudops-ai
 ```
+
+### Local infrastructure
+
+Supporting services run in Docker. Each lives in its own `infra/<service>/` folder
+with a `compose.yaml`, `.env.example`, and README. The root
+[`compose.yaml`](compose.yaml) includes them all, so from the repository root:
+
+```bash
+cp infra/postgres/.env.example infra/postgres/.env   # once
+docker compose up -d postgres    # start one service
+docker compose ps                # status ("healthy" when ready)
+docker compose down              # stop everything (data is kept)
+```
+
+| Service    | Folder                                | Address          |
+| ---------- | ------------------------------------- | ---------------- |
+| PostgreSQL | [`infra/postgres/`](infra/postgres/)  | `127.0.0.1:5432` |
+
+See each service's README for logs, shell access, and resetting data.
 
 ### Backend
 

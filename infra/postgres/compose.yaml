@@ -1,0 +1,30 @@
+# PostgreSQL for local development. Usage: see README.md in this folder.
+# Credentials come from infra/postgres/.env (copy .env.example); none are hardcoded.
+
+name: cloudops
+
+services:
+  postgres:
+    # Official Alpine build (smaller), pinned by digest so the exact build can't change.
+    image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in infra/postgres/.env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in infra/postgres/.env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in infra/postgres/.env}
+    ports:
+      # Bound to localhost only, so the database isn't reachable from your network.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # PostgreSQL 18+ images keep data under /var/lib/postgresql (not .../data).
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  postgres-data:
+    # Fixed name, so data is shared whether started from the repo root or this folder.
+    name: cloudops-postgres-data

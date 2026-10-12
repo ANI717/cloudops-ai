@@ -287,3 +287,30 @@ links entries to commits. Entries written before this log existed list their com
 - `CLOUDOPS_ENVIRONMENT=production uv run fastapi dev app/main.py`: `/docs` returns 404 and `/health` returns ok.
 - `CLOUDOPS_APP_NAME` set in `backend/.env` changes the title in `/openapi.json`.
 - `CLOUDOPS_ENVIRONMENT=bogus` fails at startup: "Input should be 'development', 'test' or 'production'".
+
+## 2026-10-12 — Local PostgreSQL with Docker Compose
+
+**What changed:**
+- Added `infra/postgres/`:
+  - `compose.yaml`: official `postgres:18.6-alpine` pinned by digest, credentials from `.env` (required, fails with a clear message if missing), port bound to `127.0.0.1`, `pg_isready` healthcheck, named volume `cloudops-postgres-data` mounted at `/var/lib/postgresql`.
+  - `.env.example`: local-only credentials template (`.env` is gitignored).
+  - `README.md`: setup, start/stop/logs, `psql` access, connection details, reset, and upgrade notes.
+- Added a root `compose.yaml` that `include`s `infra/postgres/compose.yaml`.
+- README: Docker is now a prerequisite, plus a "Local infrastructure" section and an updated tree. `CLAUDE.md`: the infra convention and status.
+
+**Why:**
+- The first features need a database. Docker runs the official image with no local install and identical behaviour on every machine.
+- Self-contained `infra/<service>/` folders (the user's choice) keep each service's config, credentials template, and docs together. Future services (Prometheus, Loki, Tempo, ...) follow the same pattern.
+- The root `compose.yaml` uses Compose `include`, so `docker compose up -d <service>` works from the root for any service, and each folder still works on its own. Compose reads each included file's `.env` from that file's own folder, per the Compose `include` reference.
+- A fixed project name (`cloudops`) and a fixed volume name mean starting from the root or the folder uses the same container and data.
+- Binding to localhost keeps the database off the local network. Required variables mean no credentials are hardcoded.
+- PostgreSQL 18+ images store data under `/var/lib/postgresql` (PGDATA `/var/lib/postgresql/18/docker`), so the volume is mounted there; the old `/var/lib/postgresql/data` path would not persist data.
+- Alpine instead of Debian: the Debian image download was repeatedly reset on this network, while the Alpine build (same PostgreSQL 18.6, smaller) downloaded fine. The only practical difference is fewer OS locales, which doesn't matter for local development.
+
+**How to verify:**
+- `cp infra/postgres/.env.example infra/postgres/.env`
+- `docker compose up -d postgres`, then `docker compose ps` shows `(healthy)` and `127.0.0.1:5432->5432/tcp`.
+- `docker compose exec postgres psql -U cloudops -d cloudops -c "select version();"` reports PostgreSQL 18.6.
+- Persistence: created a table, ran `docker compose down` from the root and `docker compose up -d` from `infra/postgres/`, and the row was still there.
+- Without `infra/postgres/.env`, `docker compose config` fails with "set POSTGRES_DB in infra/postgres/.env".
+- Gitleaks and Trivy scans are clean, and the pre-commit hooks pass.
