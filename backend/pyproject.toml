@@ -4,8 +4,11 @@ version = "0.1.0"
 description = "CloudOps AI backend API service"
 requires-python = ">=3.14"
 dependencies = [
+    "alembic>=1.20.0",
     "fastapi[standard]>=0.143.0",
+    "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.15.0",
+    "sqlalchemy>=2.0.54,<2.1",
 ]
 
 [dependency-groups]
@@ -65,9 +68,21 @@ select = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]  # assert is how pytest checks results
+"tests/**" = [
+    "S101",  # assert is how pytest checks results
+    "S105",  # tests use fake, clearly-named passwords
+    "S106",
+]
 
 [tool.mypy]
 strict = true
 files = ["app", "tests"]
 plugins = ["pydantic.mypy"]
+
+# Database migrations. The database URL is not configured here: alembic/env.py
+# reads it from app settings (CLOUDOPS_POSTGRES_* env vars / backend/.env).
+[tool.alembic]
+script_location = "%(here)s/alembic"
+prepend_sys_path = ["."]
+# Date-prefixed file names keep migrations in chronological order when listed.
+file_template = "%%(year)d_%%(month).2d_%%(day).2d_%%(hour).2d%%(minute).2d-%%(rev)s_%%(slug)s"

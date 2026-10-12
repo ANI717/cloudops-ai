@@ -314,3 +314,42 @@ links entries to commits. Entries written before this log existed list their com
 - Persistence: created a table, ran `docker compose down` from the root and `docker compose up -d` from `infra/postgres/`, and the row was still there.
 - Without `infra/postgres/.env`, `docker compose config` fails with "set POSTGRES_DB in infra/postgres/.env".
 - Gitleaks and Trivy scans are clean, and the pre-commit hooks pass.
+
+## 2026-10-12 — SQLAlchemy, Alembic, and readiness check
+
+**What changed:**
+- Dependencies: `sqlalchemy>=2.0.54,<2.1`, `psycopg[binary]>=3.3.6`, `alembic>=1.20.0`.
+- Settings: `postgres_host/port/user/db` (with defaults) and a required `postgres_password` (`SecretStr`, no default). The `database_url` property is built with `URL.create()`.
+- `app/core/db.py`: lazily created engine (`pool_pre_ping=True`, `connect_timeout=3`) and session factory.
+- `app/api/deps.py`: `get_db()` dependency and `DbSession` type alias.
+- `app/models/`: `Base` with a constraint naming convention. No tables yet.
+- Alembic in `backend/alembic/` (pyproject template, config under `[tool.alembic]`, trimmed). `env.py` reads the URL from settings and accepts an existing connection (used by tests). `alembic.ini` keeps only logging config. No migration files yet.
+- `GET /ready`: runs `SELECT 1`; returns 200 `{"status":"ready"}` or 503 `{"detail":"Database unavailable"}`, and logs the cause server-side. `/health` is unchanged.
+- Tests:
+  - `tests/conftest.py` + `tests/db.py`: switch settings to `<db>_test`, create the database if missing, drop and rebuild the schema via `alembic upgrade head` once per session, and run each test in a rolled-back transaction (`db_session`, `client` fixtures).
+  - `tests/test_db.py`: correct database, migrations applied, `get_db` works, connect timeout set, rollback isolation, `/ready` 200 and 503.
+  - `tests/test_config.py`: password required; URL escaping and secret masking.
+  - Added `tests/__init__.py`, needed for mypy once test modules import each other.
+- Ruff: allow S105/S106 (fake passwords) in `tests/` only.
+- CI backend job: PostgreSQL service container (same pinned image), `CLOUDOPS_POSTGRES_*` job env, and new `alembic upgrade head` + `alembic check` steps.
+- `backend/.env.example`: database settings matching `infra/postgres/.env.example`. README and `CLAUDE.md` updated.
+
+**Why:**
+- Every upcoming feature persists data through this layer. It needs to be correct, testable, and free of hardcoded credentials first.
+- Sync SQLAlchemy (user's choice): simpler to write, test, and debug, and FastAPI runs sync endpoints in a thread pool. This matches FastAPI's official template.
+- SQLAlchemy 2.0.x instead of 2.1: 2.1.0 was 18 days old and had four patch releases in two weeks. 2.0 is mature and maintained.
+- Real PostgreSQL in tests instead of mocks: mocks can't catch SQL errors, constraint violations, or migration and model drift. Transaction rollback keeps tests isolated and fast; the `_test` database keeps dev data safe; and the "refuse non-test database" assert guards against accidents.
+- The engine is created lazily, so non-DB tests and imports don't need a database.
+- The constraint naming convention gives Alembic stable, predictable constraint names.
+- `alembic check` in CI fails the build if someone changes a model without writing a migration.
+- Liveness vs readiness: a database outage makes `/ready` fail so traffic is diverted, while `/health` stays green so healthy processes aren't restarted.
+- Bug found during verification: with the database stopped, `/ready` took about 130 s to fail, because psycopg has no connect timeout by default. A 3 s `connect_timeout` brings that to about 3.2 s. A test checks the setting on a real connection and fails if the setting is removed.
+
+**How to verify:**
+- With PostgreSQL running and `backend/.env` created from the template: `uv run pytest --cov` gives 15 passed, 100% coverage.
+- `uv run alembic upgrade head` and `uv run alembic check` report "No new upgrade operations detected".
+- The `cloudops_test` database exists; the `cloudops` dev database has only `alembic_version`.
+- With `uv run fastapi dev app/main.py` running: `/ready` returns 200. After `docker compose stop postgres`, `/ready` returns 503 in about 3 s and `/health` still returns 200. After `docker compose start postgres`, `/ready` returns 200 again.
+- CI simulation (env vars only, no `.env`) passes. With no config at all, tests fail with "postgres_password Field required".
+- Adding a model without a migration makes `alembic check` exit non-zero.
+- Gitleaks, Trivy, and the pre-commit hooks are clean.

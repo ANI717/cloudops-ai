@@ -16,6 +16,29 @@ jobs:
       run:
         working-directory: backend
 
+    # Throwaway PostgreSQL for migrations and tests (same image as infra/postgres).
+    services:
+      postgres:
+        image: postgres:18.6-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+        env:
+          POSTGRES_USER: cloudops
+          POSTGRES_PASSWORD: ci-only-password # disposable CI container, not a secret
+          POSTGRES_DB: cloudops
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cloudops -d cloudops"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      CLOUDOPS_POSTGRES_HOST: 127.0.0.1
+      CLOUDOPS_POSTGRES_PORT: 5432
+      CLOUDOPS_POSTGRES_USER: cloudops
+      CLOUDOPS_POSTGRES_PASSWORD: ci-only-password
+      CLOUDOPS_POSTGRES_DB: cloudops
+
     steps:
       # Actions are pinned to full commit SHAs: tags can be moved, SHAs cannot.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -37,6 +60,12 @@ jobs:
 
       - name: Type check
         run: uv run mypy
+
+      - name: Apply migrations
+        run: uv run alembic upgrade head
+
+      - name: Check models and migrations are in sync
+        run: uv run alembic check
 
       - name: Test with coverage (fails below 80%)
         run: uv run pytest --cov --cov-report=term-missing --cov-report=xml

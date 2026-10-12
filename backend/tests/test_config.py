@@ -8,7 +8,8 @@ from app.main import create_app
 
 def make_settings(**overrides: str) -> Settings:
     # _env_file=None ignores any local .env so results don't depend on the machine.
-    return Settings(_env_file=None, **overrides)  # type: ignore[arg-type]
+    values = {"postgres_password": "test-password", **overrides}
+    return Settings(_env_file=None, **values)  # type: ignore[arg-type]
 
 
 def test_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -56,3 +57,25 @@ def test_docs_disabled_in_production() -> None:
     assert client.get("/redoc").status_code == 404
     assert client.get("/openapi.json").status_code == 404
     assert client.get("/health").status_code == 200
+
+
+def test_postgres_password_is_required(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("CLOUDOPS_POSTGRES_PASSWORD", raising=False)
+
+    with pytest.raises(ValidationError, match="postgres_password"):
+        Settings(_env_file=None)
+
+
+def test_database_url_escapes_password_and_hides_it() -> None:
+    settings = make_settings(postgres_password="p@ss:w/rd", postgres_db="incidents")
+
+    url = settings.database_url
+
+    assert url.drivername == "postgresql+psycopg"
+    assert url.password == "p@ss:w/rd"
+    assert url.database == "incidents"
+    # Special characters are percent-encoded, not misread as URL separators.
+    assert "p%40ss%3Aw%2Frd@" in url.render_as_string(hide_password=False)
+    # The secret never appears in logs or reprs.
+    assert "p@ss" not in str(url)
+    assert "p@ss" not in repr(settings)
