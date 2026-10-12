@@ -40,6 +40,7 @@ cloudops-ai/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml   # CI: lint, format check, type check, tests
+├── .pre-commit-config.yaml  # Git hooks run on every commit
 ├── backend/         # Python backend service (managed with uv)
 │   ├── app/
 │   │   ├── main.py      # FastAPI app factory (create_app)
@@ -104,7 +105,19 @@ uv sync
 
 `uv sync` installs the pinned Python version (3.14) if needed, creates a virtual
 environment in `backend/.venv`, and installs the exact dependencies from `uv.lock`,
-including dev tools (pytest, ruff, mypy). Re-run it after pulling changes.
+including dev tools (pytest, ruff, mypy, pre-commit). Re-run it after pulling changes.
+
+Then install the git hooks (once per clone):
+
+```bash
+uv run pre-commit install
+```
+
+From then on, every `git commit` runs basic file checks, ruff (lint + format),
+a `uv.lock` consistency check, and mypy on the staged files (configured in
+[`.pre-commit-config.yaml`](.pre-commit-config.yaml)). If a hook fails or fixes a
+file, the commit is stopped: review the changes, `git add` them, and commit again.
+Run all hooks on every file with `uv run pre-commit run --all-files`.
 
 **2. Run the development server**
 

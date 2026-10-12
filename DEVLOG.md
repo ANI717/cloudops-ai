@@ -214,3 +214,25 @@ links entries to commits. Entries written before this log existed list their com
 - The full CI sequence in the README passes locally.
 - The gate was tested by temporarily adding an untested module: coverage dropped to ~66% and pytest exited with code 1.
 - After pushing, the CI run's summary page shows the coverage table, and `coverage-xml` appears under Artifacts.
+
+## 2026-10-11 — Add pre-commit hooks
+
+**What changed:**
+- Added `pre-commit` to the backend dev dependency group (`uv add --dev pre-commit`); `uv.lock` updated.
+- Added `.pre-commit-config.yaml` at the repo root:
+  - `pre-commit-hooks` v6.0.0: trailing whitespace, end-of-file newline, YAML/TOML syntax, merge-conflict markers, large files.
+  - `ruff-pre-commit` v0.17.0: `ruff-check --fix --exit-non-zero-on-fix` and `ruff-format`, limited to `backend/`.
+  - `uv-pre-commit` 0.12.3: `uv lock --check --project backend` when `pyproject.toml` or `uv.lock` change.
+  - Local `mypy` hook: `uv run --directory backend mypy`, so it uses the project environment and `[tool.mypy]` settings.
+- README: hook install and usage instructions; `CLAUDE.md`: project status.
+
+**Why:**
+- Catches lint, format, type, and lockfile problems in seconds at commit time instead of after a push fails CI. CI stays as the backstop.
+- Hook versions match the tool versions in `uv.lock`, so the hooks and CI agree.
+- `--exit-non-zero-on-fix` stops the commit when ruff auto-fixes something, so fixes are reviewed and re-staged rather than slipping through silently.
+- Tests are not a hook: they'd slow every commit as the suite grows, and CI runs them with coverage.
+
+**How to verify:**
+- `cd backend && uv sync && uv run pre-commit install`
+- `uv run pre-commit run --all-files`: all hooks pass.
+- Commit a file containing `import os` and a function returning the wrong type: the commit is blocked (ruff removes the unused import and fails; mypy reports the type error).
