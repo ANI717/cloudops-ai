@@ -115,3 +115,17 @@ links entries to commits. Entries written before this log existed list their com
 - `uv run ruff format --check .` reports all files already formatted.
 - `uv run mypy` prints "Success: no issues found".
 - Optional: add `import os` to any file, and `ruff check` reports F401.
+
+## 2026-10-11 — Separate Pydantic schemas from routers
+
+**What changed:**
+- Added the `app/schemas/` package.
+- Moved `HealthResponse` from `app/api/health.py` to `app/schemas/health.py`. The router now imports it.
+
+**Why:**
+- Sets the convention before more endpoints arrive: routers (HTTP layer) live in `app/api/`, Pydantic request/response models in `app/schemas/`, one module per resource with matching names.
+- Schemas can be reused by routes, services, and tests without importing router modules.
+
+**How to verify:**
+- `cd backend && uv run pytest` shows 1 passed.
+- `uv run ruff check .`, `uv run ruff format --check .`, and `uv run mypy` all pass.
