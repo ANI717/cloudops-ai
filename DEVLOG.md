@@ -129,3 +129,22 @@ links entries to commits. Entries written before this log existed list their com
 **How to verify:**
 - `cd backend && uv run pytest` shows 1 passed.
 - `uv run ruff check .`, `uv run ruff format --check .`, and `uv run mypy` all pass.
+
+## 2026-10-11 — Adopt standard FastAPI package layout
+
+**What changed:**
+- Moved the health router from `app/api/health.py` to `app/api/routes/health.py`.
+- Added `app/core/config.py` with `APP_TITLE` and `APP_VERSION`, now used by `create_app()`.
+- Added empty `app/services/` and `app/utils/` packages.
+- Documented the layout conventions in `CLAUDE.md`.
+
+**Why:**
+- Follows FastAPI's official project template: `api/` holds only the HTTP layer, and `schemas/`, `services/`, `core/`, `utils/` sit beside it.
+- Business logic and config are used by non-HTTP code too (future workers, ingestion, AI analysis), so they must not live under `api/`.
+- Supersedes the "routers live in `app/api/`" convention from the previous entry: routers now live in `app/api/routes/`.
+- Config is plain constants for now; env-based settings come later when needed.
+
+**How to verify:**
+- `cd backend && uv run pytest` shows 1 passed.
+- `uv run ruff check .`, `uv run ruff format --check .`, and `uv run mypy` all pass.
+- `uv run fastapi dev app/main.py`, then `curl http://127.0.0.1:8000/health` returns `{"status":"ok"}`.
