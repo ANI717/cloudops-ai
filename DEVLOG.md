@@ -353,3 +353,28 @@ links entries to commits. Entries written before this log existed list their com
 - CI simulation (env vars only, no `.env`) passes. With no config at all, tests fail with "postgres_password Field required".
 - Adding a model without a migration makes `alembic check` exit non-zero.
 - Gitleaks, Trivy, and the pre-commit hooks are clean.
+
+## 2026-10-12 — Branch + PR workflow with a GitHub ruleset
+
+**What changed:**
+- Added a GitHub branch ruleset `main protection` (Settings → Rules → Rulesets), set to Active and targeting the default branch with no bypass list:
+  - Requires a pull request before merging, with 0 required approvals.
+  - Requires the `Backend checks` and `Security scans` status checks to pass, with the branch up to date with `main`.
+  - Requires linear history.
+  - Blocks force pushes and restricts deletions.
+- Settings → General → Pull Requests: only squash merging is allowed.
+- `CLAUDE.md`: project status now describes the workflow. "Branch + PR workflow" moved from Deferred to Done.
+- No code or CI changes. The ruleset lives in GitHub's settings, not in the repository.
+
+**Why:**
+- Before this, a direct push could put untested code on `main`. Now every change goes through CI before it merges.
+- 0 approvals because GitHub doesn't let authors approve their own PRs. Requiring 1 approval would block a solo developer.
+- Squash merging plus linear history means each PR is one commit on `main`, which matches the conventional commit style (`feat:`, `ci:`, ...).
+- An empty bypass list means the rules apply to the admin too.
+- The rules were set up by hand in the UI, which was the user's choice. A committed JSON export or the `gh` CLI were the alternatives, and both would need extra tooling or steps.
+- Squash merging creates a new commit on `main`, so a long-lived branch drifts away from it. Use one short-lived branch per task.
+
+**How to verify:**
+- Settings → Rules → Rulesets shows `main protection` as Active.
+- A direct `git push origin main` is rejected with `GH013`.
+- The PR containing this entry can only be merged after both CI checks pass, and it offers only "Squash and merge".
