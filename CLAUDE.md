@@ -83,5 +83,6 @@ Implemented so far:
 
 - Repository foundation: README, Apache 2.0 license, `.gitignore`, `.gitattributes`, `DEVLOG.md`.
 - `backend/`: uv project (Python 3.14) with a FastAPI app (`create_app()` factory) and a `GET /health` endpoint, tested with pytest.
+- Backend code quality: ruff (lint + format) and mypy (strict, with the pydantic plugin), configured in `backend/pyproject.toml`.
 
-Current objective: Establish the development environment. Next proposed step: add ruff (lint/format) and mypy (strict type checking) to the backend.
+Current objective: Establish the development environment. Next proposed step: add a GitHub Actions CI workflow running tests, ruff, and mypy. Then: pre-commit hooks, then a branch + PR workflow.

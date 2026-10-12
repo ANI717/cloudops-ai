@@ -89,6 +89,14 @@ Run the tests:
 uv run pytest
 ```
 
+Lint, format, and type-check (configured in `backend/pyproject.toml`):
+
+```bash
+uv run ruff check .          # lint (add --fix to auto-fix safe issues)
+uv run ruff format .         # format code (use --check to verify only)
+uv run mypy                  # strict static type checking
+```
+
 ## License
 
 Copyright 2026 Animesh Bala Ani

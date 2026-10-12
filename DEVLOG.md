@@ -93,3 +93,25 @@ links entries to commits. Entries written before this log existed list their com
 **How to verify:**
 - Open `DEVLOG.md` and confirm the entries follow the format at the top of the file.
 - `grep -n DEVLOG CLAUDE.md` shows the new rule.
+
+## 2026-10-11 — Add ruff and mypy to the backend
+
+**What changed:**
+- Added dev dependencies `ruff` and `mypy`.
+- Configured both in `backend/pyproject.toml`:
+  - ruff: line length 88, Python 3.14 target, rule sets `E W F I B UP SIM N S RUF`. `assert` is allowed in tests.
+  - mypy: `strict = true`, checks `app/` and `tests/`, with the `pydantic.mypy` plugin.
+- Added lint, format, and type-check commands to the README.
+- Updated the project status in `CLAUDE.md`.
+
+**Why:**
+- Catches bugs, style drift, unsafe patterns (e.g. `shell=True`), and type errors automatically instead of by eye.
+- Strict mypy enforces the "use type hints" standard in `CLAUDE.md`.
+- The pydantic plugin makes mypy understand Pydantic models correctly.
+
+**How to verify:**
+- `cd backend && uv sync`
+- `uv run ruff check .` prints "All checks passed!"
+- `uv run ruff format --check .` reports all files already formatted.
+- `uv run mypy` prints "Success: no issues found".
+- Optional: add `import os` to any file, and `ruff check` reports F401.
