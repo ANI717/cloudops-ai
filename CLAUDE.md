@@ -85,6 +85,7 @@ Implemented so far:
 - `backend/`: uv project (Python 3.14) with a FastAPI app (`create_app()` factory) and a `GET /health` endpoint, tested with pytest.
 - Backend layout (`backend/app/`): `api/routes/` for HTTP routers only (one module per resource, registered in `api/main.py`), `schemas/` for Pydantic models, `services/` for business logic, `core/config.py` for app-wide settings, `utils/` for small shared helpers. One module per resource with matching names.
 - Backend code quality: ruff (lint + format) and mypy (strict, with the pydantic plugin), configured in `backend/pyproject.toml`.
-- CI: GitHub Actions workflow (`.github/workflows/ci.yml`) runs ruff, mypy, and pytest on pushes to `main` and on pull requests. Actions are pinned to commit SHAs.
+- CI: GitHub Actions workflow (`.github/workflows/ci.yml`) runs ruff, mypy, and pytest with coverage on pushes to `main` and on pull requests. Actions are pinned to commit SHAs.
+- Test coverage: pytest-cov, configured in `backend/pyproject.toml`. Measures `app/` with branch coverage, minimum 80%. Opt-in locally with `uv run pytest --cov`. CI publishes the report to the run summary and a `coverage-xml` artifact (no external coverage services).
 
 Current objective: Establish the development environment. Next proposed step: pre-commit hooks. Then: a branch + PR workflow.

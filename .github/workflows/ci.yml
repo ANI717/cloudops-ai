@@ -38,5 +38,18 @@ jobs:
       - name: Type check
         run: uv run mypy
 
-      - name: Test
-        run: uv run pytest
+      - name: Test with coverage (fails below 80%)
+        run: uv run pytest --cov --cov-report=term-missing --cov-report=xml
+
+      # Shows the coverage table on the workflow run's summary page.
+      - name: Coverage summary
+        if: ${{ !cancelled() }}
+        run: uv run coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage-xml
+          path: backend/coverage.xml
+          if-no-files-found: warn

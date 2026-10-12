@@ -193,3 +193,24 @@ links entries to commits. Entries written before this log existed list their com
 **How to verify:**
 - `cd backend && uv run pytest` shows 1 passed; `ruff check`, `ruff format --check`, and `mypy` pass.
 - `uv run fastapi dev app/main.py`, then `curl http://127.0.0.1:8000/health` returns `{"status":"ok"}`.
+
+## 2026-10-11 — Add test coverage with pytest-cov
+
+**What changed:**
+- Added `pytest-cov` (with `coverage`) to the dev dependency group via `uv add --dev`; `uv.lock` updated.
+- `backend/pyproject.toml`: new `[tool.coverage.run]`, `[tool.coverage.report]`, and `[tool.coverage.xml]` sections. They measure `app/` only with branch coverage, omit migration and generated files, show missing lines, skip empty files, fail under 80%, and write `coverage.xml`.
+- `.github/workflows/ci.yml`: the test step runs `pytest --cov --cov-report=term-missing --cov-report=xml`. New steps write a Markdown coverage table to the job summary and upload `coverage.xml` as the `coverage-xml` artifact (`actions/upload-artifact`, pinned to the v7.0.1 SHA).
+- `.gitignore`: added `coverage.xml`.
+- README and `CLAUDE.md`: documented the coverage commands.
+
+**Why:**
+- Shows which application code is never executed by tests, and the 80% gate stops coverage from silently eroding.
+- Branch coverage catches an `if` whose `else` path is never tested, which line coverage misses.
+- Coverage is opt-in (`--cov`) rather than in pytest `addopts`, so running one test file locally doesn't fail the threshold. CI always runs with it.
+- No external service (e.g. Codecov): the report stays in GitHub Actions (job summary + artifact), keeping with the no-third-party-services constraint.
+
+**How to verify:**
+- `cd backend && uv run pytest --cov` reports 100% and "Required test coverage of 80.0% reached".
+- The full CI sequence in the README passes locally.
+- The gate was tested by temporarily adding an untested module: coverage dropped to ~66% and pytest exited with code 1.
+- After pushing, the CI run's summary page shows the coverage table, and `coverage-xml` appears under Artifacts.

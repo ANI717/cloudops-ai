@@ -127,6 +127,15 @@ curl http://127.0.0.1:8000/health   # {"status":"ok"}
 uv run pytest       # add -v for one line per test
 ```
 
+Run the tests with coverage (lists uncovered lines and fails below 80%):
+
+```bash
+uv run pytest --cov
+```
+
+Coverage is configured under `[tool.coverage.*]` in `backend/pyproject.toml`. Add
+`--cov-report=html` to browse line-by-line results in `htmlcov/index.html`.
+
 **4. Lint, format, and type-check** (configured in `backend/pyproject.toml`)
 
 ```bash
@@ -141,7 +150,7 @@ The same checks [CI](.github/workflows/ci.yml) runs on every push to `main` and
 every pull request:
 
 ```bash
-uv sync --locked && uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest
+uv sync --locked && uv run ruff check . && uv run ruff format --check . && uv run mypy && uv run pytest --cov
 ```
 
 ## License
