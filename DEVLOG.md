@@ -148,3 +148,20 @@ links entries to commits. Entries written before this log existed list their com
 - `cd backend && uv run pytest` shows 1 passed.
 - `uv run ruff check .`, `uv run ruff format --check .`, and `uv run mypy` all pass.
 - `uv run fastapi dev app/main.py`, then `curl http://127.0.0.1:8000/health` returns `{"status":"ok"}`.
+
+## 2026-10-11 — Add GitHub Actions CI
+
+**What changed:**
+- Added `.github/workflows/ci.yml` with one `backend` job that runs on pushes to `main` and on pull requests. Steps: checkout, install uv, install Python from `.python-version`, `uv sync --locked`, `ruff check`, `ruff format --check`, `mypy`, `pytest`.
+- Updated the project status in `CLAUDE.md`.
+
+**Why:**
+- Runs the same checks on every change automatically, so broken, unformatted, or badly typed code can't reach `main` unnoticed.
+- Follows uv's official GitHub Actions guide.
+- `uv sync --locked` fails if `uv.lock` is out of sync with `pyproject.toml`, so CI always tests the locked dependencies.
+- Actions are pinned to full commit SHAs, because a tag can be repointed to different code (a supply-chain risk).
+- `permissions: contents: read` gives the workflow the least access it needs.
+
+**How to verify:**
+- Locally, from `backend/`: `uv sync --locked`, `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy`, and `uv run pytest` all pass.
+- After pushing, the "CI" run shows green in the repository's Actions tab.
